@@ -1,3 +1,4 @@
+# eval.py
 import os
 import json
 import argparse
@@ -41,6 +42,7 @@ dataset2metric = {
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
+    parser.add_argument('--save_dir', type=str, default="results/")
     parser.add_argument('--model', type=str, default=None)
     parser.add_argument('--e', action='store_true', help="Evaluate on LongBench-E")
     return parser.parse_args(args)
@@ -78,9 +80,9 @@ if __name__ == '__main__':
     args = parse_args()
     scores = dict()
     if args.e:
-        path = f"pred_e/{args.model}/"
+        path = os.path.join(args.save_dir, "pred_e", args.model)
     else:
-        path = f"pred/{args.model}/"
+        path = os.path.join(args.save_dir, "pred", args.model)
     all_files = os.listdir(path)
     print("Evaluating on:", all_files)
     for filename in all_files:
@@ -88,7 +90,7 @@ if __name__ == '__main__':
             continue
         predictions, answers, lengths = [], [], []
         dataset = filename.split('.')[0]
-        with open(f"{path}{filename}", "r", encoding="utf-8") as f:
+        with open(os.path.join(path, filename), "r", encoding="utf-8") as f:
             for line in f:
                 data = json.loads(line)
                 predictions.append(data["pred"])
@@ -102,8 +104,8 @@ if __name__ == '__main__':
             score = scorer(dataset, predictions, answers, all_classes)
         scores[dataset] = score
     if args.e:
-        out_path = f"pred_e/{args.model}/result.json"
+        out_path = os.path.join(args.save_dir, "pred_e", args.model, "result.json")
     else:
-        out_path = f"pred/{args.model}/result.json"
+        out_path = os.path.join(args.save_dir, "pred", args.model, "result.json")
     with open(out_path, "w") as f:
         json.dump(scores, f, ensure_ascii=False, indent=4)
