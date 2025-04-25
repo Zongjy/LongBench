@@ -6,5 +6,9 @@
     "chatglm2-6b": 31500,
     "chatglm2-6b-32k": 31500,
     "chatglm3-6b-32k": 31500,
-    "vicuna-v1.5-7b-16k": 15500
+    "vicuna-v1.5-7b-16k": 15500,
+    "meta-llama/Llama-3.1-8B-Instruct": 131072,
+    "gradientai/Llama-3-8B-Instruct-262k": 262144,
+    "Qwen/Qwen2.5-7B-Instruct": 131072,
+    "Qwen/Qwen2.5-7B-Instruct-1M": 1010000
 }

@@ -13,13 +13,15 @@ import argparse
 
 URL = "http://127.0.0.1:8000/v1"
 API_KEY = "EMPTY"
-model_map = json.loads(open('config/model2path.json', encoding='utf-8').read())
-maxlen_map = json.loads(open('config/model2maxlen.json', encoding='utf-8').read())
+model2path = json.load(open('config/model2path.json', "r"))
+model2maxlen = json.load(open('config/model2maxlen.json', "r"))
+dataset2prompt = json.load(open("config/dataset2prompt.json", "r"))
+dataset2maxlen = json.load(open("config/dataset2maxlen.json", "r"))
 
-def query_llm(prompt, model, tokenizer, client=None, temperature=0.5, max_new_tokens=128, stop=None):
+def query_llm(prompt, model, tokenizer, client=None, temperature=0.8, max_new_tokens=128, stop=None):
     # truncate
-    max_len = maxlen_map[model]
-    if model in model_map:
+    max_len = model2maxlen[model]
+    if model in model2path:
         input_ids = tokenizer.encode(prompt)
         if len(input_ids) > max_len:
             input_ids = input_ids[:max_len//2] + input_ids[-max_len//2:]
@@ -30,8 +32,10 @@ def query_llm(prompt, model, tokenizer, client=None, temperature=0.5, max_new_to
             input_ids = input_ids[:max_len//2] + input_ids[-max_len//2:]
             prompt = tokenizer.decode(input_ids)
     tries = 0
-    if model in model_map:
-        model = model_map[model]
+    if model in model2path:
+        model = model2path[model]
+    else:
+        raise ValueError("Model not in model2path.json")
     while tries < 5:
         tries += 1
         try:
@@ -56,7 +60,7 @@ def query_llm(prompt, model, tokenizer, client=None, temperature=0.5, max_new_to
 
 def get_pred(data, prompt_format, max_new_tokens, out_path, args):
     model = args.model
-    tokenizer = AutoTokenizer.from_pretrained(model_map[model], trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model2path[model], trust_remote_code=True)
     client = OpenAI(
         base_url=URL,
         api_key=API_KEY
@@ -64,7 +68,7 @@ def get_pred(data, prompt_format, max_new_tokens, out_path, args):
 
     for json_obj in tqdm(data):
         prompt = prompt_format.format(**json_obj)
-        output = query_llm(prompt, model, tokenizer, client, temperature=0.1, max_new_tokens=max_new_tokens)
+        output = query_llm(prompt, model, tokenizer, client, temperature=0.8, max_new_tokens=max_new_tokens)
         if output == '':
             continue
         with open(out_path, "a", encoding="utf-8") as f:
@@ -81,20 +85,17 @@ def get_pred(data, prompt_format, max_new_tokens, out_path, args):
             f.write("\n")
 
 def seed_everything(seed):
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
     np.random.seed(seed)
     random.seed(seed)
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-    torch.cuda.manual_seed_all(seed)
+    # torch.manual_seed(seed)
+    # torch.cuda.manual_seed(seed)
+    # torch.backends.cudnn.benchmark = False
+    # torch.backends.cudnn.deterministic = True
+    # torch.cuda.manual_seed_all(seed)
 
 def main():
     os.makedirs(args.save_dir, exist_ok=True)
-    print(args)
-
     model_name = args.model
-
     if args.e:
         datasets = [
             "qasper",
@@ -112,32 +113,8 @@ def main():
             "repobench-p",
         ]
     else:
-        datasets = [
-            # "narrativeqa",
-            # "qasper",
-            "multifieldqa_en",
-            # "multifieldqa_zh",
-            "hotpotqa",
-            # "2wikimqa",
-            # "musique",
-            # "dureader",
-            # "gov_report",
-            "qmsum",
-            # "multi_news",
-            # "vcsum",
-            # "trec",
-            "triviaqa",
-            # "samsum",
-            # "lsht",
-            # "passage_count",
-            "passage_retrieval_en",
-            # "passage_retrieval_zh",
-            # "lcc",
-            "repobench-p",
-        ]
+        datasets = args.datasets.split(",")
 
-    dataset2prompt = json.load(open("config/dataset2prompt.json", "r"))
-    dataset2maxlen = json.load(open("config/dataset2maxlen.json", "r"))
 
     pred_dir = os.path.join(args.save_dir, "pred")
     pred_e_dir = os.path.join(args.save_dir, "pred_e")
@@ -146,7 +123,7 @@ def main():
 
     for dataset in datasets:
         if args.e:
-            data = load_dataset("~/exp/LongBench/LongBench/LongBench.py", f"{dataset}_e", split="test", trust_remote_code=True)
+            data = load_dataset("/home/liyi/LongBench/LongBenchv1/LongBench.py", f"{dataset}_e", split="test", trust_remote_code=True)
             if args.sp:
                 out_dir = os.path.join(pred_e_dir, model_name+"-sparse")
             else:
@@ -154,10 +131,12 @@ def main():
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{dataset}.jsonl")
         else:
-            data = load_dataset("~/exp/LongBench/LongBench/LongBench.py", dataset, split="test", trust_remote_code=True)
+            data = load_dataset("/home/liyi/LongBench/LongBenchv1/LongBench.py", dataset, split="test", trust_remote_code=True)
             if args.sp:
                 out_dir = os.path.join(pred_dir, model_name + "-sparse")
             else:
+                print(pred_dir)
+                print(model_name)
                 out_dir = os.path.join(pred_dir, model_name)
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{dataset}.jsonl")
@@ -184,5 +163,8 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default=None, help="Model name")
     parser.add_argument("--e", action="store_true", help="Evaluate on LongBench-E")
     parser.add_argument("--sp", action="store_true" ,help="Sparse")
+    parser.add_argument("--dp", type=int, default=1, help="Data Parallel")
+    parser.add_argument("--datasets", type=str, default="all", help="Datasets to evaluate on")
     args = parser.parse_args()
+    print(args)
     main()

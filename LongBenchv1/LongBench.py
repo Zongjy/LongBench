@@ -16,6 +16,7 @@ import os
 import datasets
 import json
 
+
 _DESCRIPTION = """\
 LongBench is a comprehensive benchmark for multilingual and multi-task purposes, with the goal to fully measure and evaluate the ability of pre-trained language models to understand long text. This dataset consists of twenty different tasks, covering key long-text application scenarios such as multi-document QA, single-document QA, summarization, few-shot learning, synthetic tasks, and code completion.
 """
@@ -23,27 +24,43 @@ LongBench is a comprehensive benchmark for multilingual and multi-task purposes,
 _HOMEPAGE = "https://github.com/THUDM/LongBench"
 
 
-# _URL = r"https://huggingface.co/datasets/THUDM/LongBench/resolve/main/data.zip"
-_URLS = {
-    "2wikimqa": "./data/2wikimqa.jsonl", 
-    "dureader": "./data/dureader.jsonl", 
-    "qasper": "./data/qasper.jsonl", 
-    "hotpotqa": "./data/hotpotqa.jsonl", 
-    "narrativeqa": "./data/narrativeqa.jsonl", 
-    "musique": "./data/musique.jsonl", 
-    "multifieldqa_zh":"./data/multifieldqa_zh.jsonl",
-    "multifieldqa_en":"./data/multifieldqa_en.jsonl",
-}
+_URL = r"https://huggingface.co/datasets/THUDM/LongBench/resolve/main/data.zip"
 
 task_list = [
-    "multifieldqa_en",
-    "qasper",
-    "2wikimqa",
-    "dureader",
-    "hotpotqa",
     "narrativeqa",
+    "qasper",
+    "multifieldqa_en",
+    "multifieldqa_zh",
+    "hotpotqa",
+    "2wikimqa",
     "musique",
-    "multifieldqa_zh"
+    "dureader",
+    "gov_report",
+    "qmsum",
+    "multi_news",
+    "vcsum",
+    "trec",
+    "triviaqa",
+    "samsum",
+    "lsht",
+    "passage_count",
+    "passage_retrieval_en",
+    "passage_retrieval_zh",
+    "lcc",
+    "repobench-p",
+    "qasper_e",
+    "multifieldqa_en_e",
+    "hotpotqa_e",
+    "2wikimqa_e",
+    "gov_report_e",
+    "multi_news_e",
+    "trec_e",
+    "triviaqa_e",
+    "samsum_e",
+    "passage_count_e",
+    "passage_retrieval_en_e",
+    "lcc_e",
+    "repobench-p_e"
 ]
 
 
@@ -70,7 +87,6 @@ class LongBench(datasets.GeneratorBasedBuilder):
                 "dataset": datasets.Value("string"), 
                 "language": datasets.Value("string"), 
                 "all_classes": [datasets.Value("string")],
-                "retrieved": [datasets.Value("string")],
                 "_id": datasets.Value("string"), 
             }
         )
@@ -81,15 +97,19 @@ class LongBench(datasets.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager):
+        # data_dir = dl_manager.download_and_extract(_URL)
+        #data_dir = os.path.join(
+        #    os.path.dirname(__file__), "data"
+        #)
+        data_dir = "/home/liyi/LongBench/data"
+        print(f"data_dir: {data_dir}")
         task_name = self.config.name
-        data_dir = dl_manager.download(_URLS[task_name])
         return [
             datasets.SplitGenerator(
                 name=datasets.Split.TEST,
                 gen_kwargs={
                     "filepath": os.path.join(
-                        # data_dir, f"{task_name}.jsonl"
-                        data_dir
+                        data_dir, "data", f"{task_name}.jsonl"
                     ),
                 },
             )
@@ -107,7 +127,6 @@ class LongBench(datasets.GeneratorBasedBuilder):
                     "length": item["length"],
                     "dataset": item["dataset"],
                     "language": item["language"],
-                    "retrieved": item["retrieved"],
                     "_id": item["_id"],
                     "all_classes": item["all_classes"],
                 }
