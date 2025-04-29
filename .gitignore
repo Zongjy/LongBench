@@ -1,6 +1,8 @@
 # data related files
 data/*
 *.zip
-
+*.jsonl
+result.json
 # results
 results/*
+*.pyc

@@ -3,6 +3,7 @@ import os
 import json
 import argparse
 import numpy as np
+import glob
 
 from metrics import (
     qa_f1_score,
@@ -42,9 +43,10 @@ dataset2metric = {
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--save_dir', type=str, default="results/")
+    parser.add_argument('--save_dir', type=str, default="/home/liyi/LongBench/LongBenchv1/results")
     parser.add_argument('--model', type=str, default=None)
     parser.add_argument('--e', action='store_true', help="Evaluate on LongBench-E")
+    parser.add_argument('--desc', type=str, default=None)
     return parser.parse_args(args)
 
 def scorer_e(dataset, predictions, answers, lengths, all_classes):
@@ -70,7 +72,10 @@ def scorer(dataset, predictions, answers, all_classes):
     for (prediction, ground_truths) in zip(predictions, answers):
         score = 0.
         if dataset in ["trec", "triviaqa", "samsum", "lsht"]:
-            prediction = prediction.lstrip('\n').split('\n')[0]
+            if prediction is not None:
+                prediction = prediction.lstrip('\n').split('\n')[0]
+            else:
+                prediction = ""
         for ground_truth in ground_truths:
             score = max(score, dataset2metric[dataset](prediction, ground_truth, all_classes=all_classes))
         total_score += score
@@ -79,33 +84,68 @@ def scorer(dataset, predictions, answers, all_classes):
 if __name__ == '__main__':
     args = parse_args()
     scores = dict()
+    model_name = args.model + ("_" + args.desc if args.desc else "")
     if args.e:
-        path = os.path.join(args.save_dir, "pred_e", args.model)
+        base_pred_path = os.path.join(args.save_dir, "pred_e", model_name)
     else:
-        path = os.path.join(args.save_dir, "pred", args.model)
-    all_files = os.listdir(path)
-    print("Evaluating on:", all_files)
-    for filename in all_files:
-        if not filename.endswith("jsonl"):
-            continue
-        predictions, answers, lengths = [], [], []
-        dataset = filename.split('.')[0]
-        with open(os.path.join(path, filename), "r", encoding="utf-8") as f:
-            for line in f:
-                data = json.loads(line)
-                predictions.append(data["pred"])
-                answers.append(data["answers"])
-                all_classes = data["all_classes"]
-                if "length" in data:
-                    lengths.append(data["length"])
-        if args.e:
-            score = scorer_e(dataset, predictions, answers, lengths, all_classes)
+        base_pred_path = os.path.join(args.save_dir, "pred", model_name)
+    if not os.path.exists(base_pred_path):
+        print(f"Error: Prediction directory not found at {base_pred_path}")
+        exit()
+
+    all_files = glob.glob(os.path.join(base_pred_path, "*.jsonl"))
+    dataset_data = {}
+    for file_path in all_files:
+        filename = os.path.basename(file_path)
+
+        # Determine the base dataset name (handling _rank.jsonl files)
+        base_name_without_ext = filename[:-len(".jsonl")] # Remove .jsonl
+        parts = base_name_without_ext.rsplit('_', 1)
+        # Check if the part after the last '_' is purely digits
+        if len(parts) == 2 and parts[1].isdigit():
+            dataset_name = parts[0]
         else:
-            score = scorer(dataset, predictions, answers, all_classes)
-        scores[dataset] = score
+            dataset_name = base_name_without_ext
+
+        if dataset_name not in dataset_data:
+            dataset_data[dataset_name] = {'predictions': [], 'answers': [], 'lengths': [], 'all_classes': None}
+    
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f.readlines():
+                try:
+                    data = json.loads(line)
+                except json.JSONDecodeError as e:
+                    print(f"Error decoding JSON from line: {line}, file_path: {file_path}, expection from: {e}")
+                    exit(1)
+                dataset_data[dataset_name]['predictions'].append(data.get("pred", ""))
+                dataset_data[dataset_name]['answers'].append(data.get("answers", []))
+                if args.e and "length" in data:
+                    dataset_data[dataset_name]['lengths'].append(data["length"])
+                if dataset_data[dataset_name]['all_classes'] is None and "all_classes" in data:
+                        dataset_data[dataset_name]['all_classes'] = data["all_classes"]
+
+    print("Calculating scores for datasets:")
+    # Now iterate through the collected data per dataset and calculate scores
+    for dataset_name, data_lists in dataset_data.items():
+        predictions = data_lists['predictions']
+        answers = data_lists['answers']
+        lengths = data_lists['lengths']
+        all_classes = data_lists['all_classes'] # Use the collected all_classes
+
+        if not predictions: # Skip if no data was collected for this dataset
+            print(f"  No valid data found for dataset {dataset_name}. Skipping.")
+            continue 
+
+        print(f"  Calculating score for {dataset_name} with {len(predictions)} samples.")
+
+        if args.e:
+            score = scorer_e(dataset_name, predictions, answers, lengths, all_classes)
+        else:
+            score = scorer(dataset_name, predictions, answers, all_classes)
+        scores[dataset_name] = score
     if args.e:
-        out_path = os.path.join(args.save_dir, "pred_e", args.model, "result.json")
+        out_path = os.path.join(args.save_dir, "pred_e", model_name, "result.json")
     else:
-        out_path = os.path.join(args.save_dir, "pred", args.model, "result.json")
+        out_path = os.path.join(args.save_dir, "pred", model_name, "result.json")
     with open(out_path, "w") as f:
         json.dump(scores, f, ensure_ascii=False, indent=4)
