@@ -11,8 +11,8 @@ import random
 import argparse
 import multiprocessing
 
-# URL = "http://0.0.0.0:11451/v1"
-URL = "http://10.16.49.150:36663/v1"
+URL = "http://0.0.0.0:11451/v1"
+# URL = "http://10.16.49.244:37641/v1"
 API_KEY = "None"
 model2path = json.load(open('/home/liyi/LongBench/LongBenchv1/config/model2path.json', "r"))
 model2maxlen = json.load(open('/home/liyi/LongBench/LongBenchv1/config/model2maxlen.json', "r"))
@@ -36,9 +36,11 @@ def query_llm(prompt, model, tokenizer, client=None, temperature=0.6, max_new_to
     while tries < 5:
         tries += 1
         try:
+            # print(prompt)
+            # exit(1)
             completion = client.chat.completions.create(
                 model=model_path,
-                messages=[{"role": "user", "content": '\\no_think' + prompt}],
+                messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
                 max_tokens=max_new_tokens,
                 stop=stop

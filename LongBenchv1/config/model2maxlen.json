@@ -10,6 +10,7 @@
     "Llama-3.1-8B-Instruct": 131072,
     "Llama-3-8B-Instruct-262k": 262144,
     "Qwen2.5-7B-Instruct": 131072,
-    "Qwen2.5-7B-Instruct-1M": 1010000,
-    "Qwen3-30B-A3B-FP8": 40000
+    "Qwen2.5-7B-Instruct-1M": 262144,
+    "Qwen2.5-32B-Instruct": 131072,
+    "Qwen3-30B-A3B-FP8": 32768
 }
