@@ -1,5 +1,5 @@
 N=4
-MODEL_NAME="Llama-3-8B-Instruct-262k"
+MODEL_NAME="Qwen2.5-14B-Instruct"
 SAVE_DIR="/home/$USER/LongBench/LongBenchv1/results"
 RUN_FILE="/home/$USER/LongBench/LongBenchv1/pred_v1.py"
 
@@ -9,4 +9,4 @@ torchrun --nproc_per_node=$N $RUN_FILE \
     --save_dir $SAVE_DIR \
     --model $MODEL_NAME \
     --datasets all \
-    --desc "sphere-4-0.25-8" \
+    --desc "sphere-0.1" \

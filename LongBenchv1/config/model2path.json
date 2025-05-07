@@ -10,6 +10,7 @@
     "Llama-3.1-8B-Instruct": "meta-llama/Llama-3.1-8B-Instruct",
     "Llama-3-8B-Instruct-262k": "gradientai/Llama-3-8B-Instruct-262k",
     "Qwen2.5-7B-Instruct": "Qwen/Qwen2.5-7B-Instruct",
+    "Qwen2.5-14B-Instruct": "Qwen/Qwen2.5-14B-Instruct",
     "Qwen2.5-7B-Instruct-1M": "Qwen/Qwen2.5-7B-Instruct-1M",
     "Qwen2.5-32B-Instruct": "Qwen/Qwen2.5-32B-Instruct",
     "Qwen3-30B-A3B-FP8": "Qwen/Qwen3-30B-A3B-FP8"

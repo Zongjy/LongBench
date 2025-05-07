@@ -17,6 +17,8 @@ from metrics import (
     code_sim_score,
 )
 
+USER = os.getenv("USER")
+
 dataset2metric = {
     "narrativeqa": qa_f1_score,
     "qasper": qa_f1_score,
@@ -43,7 +45,7 @@ dataset2metric = {
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
-    parser.add_argument('--save_dir', type=str, default="/home/liyi/LongBench/LongBenchv1/results")
+    parser.add_argument('--save_dir', type=str, default=f"/home/{USER}/LongBench/LongBenchv1/results")
     parser.add_argument('--model', type=str, default=None)
     parser.add_argument('--e', action='store_true', help="Evaluate on LongBench-E")
     parser.add_argument('--desc', type=str, default=None)

@@ -11,13 +11,13 @@ import random
 import argparse
 import multiprocessing
 
+USER = os.getenv("USER")
 URL = "http://0.0.0.0:11451/v1"
-# URL = "http://10.16.49.244:37641/v1"
 API_KEY = "None"
-model2path = json.load(open('/home/liyi/LongBench/LongBenchv1/config/model2path.json', "r"))
-model2maxlen = json.load(open('/home/liyi/LongBench/LongBenchv1/config/model2maxlen.json', "r"))
-dataset2prompt = json.load(open("/home/liyi/LongBench/LongBenchv1/config/dataset2prompt.json", "r"))
-dataset2maxlen = json.load(open("/home/liyi/LongBench/LongBenchv1/config/dataset2maxlen.json", "r"))
+model2path = json.load(open(f'/home/{USER}/LongBench/LongBenchv1/config/model2path.json', "r"))
+model2maxlen = json.load(open(f'/home/{USER}/LongBench/LongBenchv1/config/model2maxlen.json', "r"))
+dataset2prompt = json.load(open(f"/home/{USER}/LongBench/LongBenchv1/config/dataset2prompt.json", "r"))
+dataset2maxlen = json.load(open(f"/home/{USER}/LongBench/LongBenchv1/config/dataset2maxlen.json", "r"))
 
 def query_llm(prompt, model, tokenizer, client=None, temperature=0.6, max_new_tokens=128, stop=None):
     # truncate
@@ -170,7 +170,7 @@ def main(args):
 
         try:
             data = load_dataset(
-                "/home/liyi/LongBench/LongBenchv1/LongBench.py",
+                f"/home/{USER}/LongBench/data/LongBench.py",
                 f"{dataset}_e" if args.e else dataset,
                 split="test",
                 trust_remote_code=True
