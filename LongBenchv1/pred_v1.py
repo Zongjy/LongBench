@@ -19,7 +19,7 @@ model2maxlen = json.load(open(f'/home/{USER}/LongBench/LongBenchv1/config/model2
 dataset2prompt = json.load(open(f"/home/{USER}/LongBench/LongBenchv1/config/dataset2prompt.json", "r"))
 dataset2maxlen = json.load(open(f"/home/{USER}/LongBench/LongBenchv1/config/dataset2maxlen.json", "r"))
 
-def query_llm(prompt, model, tokenizer, client=None, temperature=0.6, max_new_tokens=128, stop=None):
+def query_llm(prompt, model, tokenizer, client=None, temperature=0.0, max_new_tokens=128, stop=None):
     # truncate
     max_len = model2maxlen.get(model, 2048)
     input_ids = tokenizer.encode(prompt, add_special_tokens=False)

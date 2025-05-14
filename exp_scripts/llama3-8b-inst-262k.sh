@@ -9,4 +9,4 @@ torchrun --nproc_per_node=$N $RUN_FILE \
     --save_dir $SAVE_DIR \
     --model $MODEL_NAME \
     --datasets all \
-    --desc "sphere-4-0.25-8" \
+    --desc "triton" \
