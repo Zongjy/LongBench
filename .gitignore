@@ -1,5 +1,4 @@
 # data related files
-data/*
 *.zip
 *.jsonl
 result.json
